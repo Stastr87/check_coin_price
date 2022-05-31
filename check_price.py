@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import logging
+import os
 from pprint import pprint
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s_%(levelname)s: %(message)s')
@@ -31,13 +32,13 @@ def get_config():
 
 
 def get_quotes_data():
-    with open('response_data.json', 'r') as quotes_file:
+    with open(os.path.join('.','temp','response_data.json'), 'r') as quotes_file:
         quotes=json.loads(quotes_file.read())
         quotes_file.close()
     return quotes
 
 def save_data(json_data):    #Сохранение данных json в файл
-    with open('output_data.json', 'w', encoding='utf-8') as output_data_file:
+    with open(os.path.join('.','temp','output_data.json'), 'w', encoding='utf-8') as output_data_file:
         output_data_file.write(json.dumps(json_data, indent=4, sort_keys=True))
         output_data_file.close()
 
