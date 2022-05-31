@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import logging
+import os
 from pprint import pprint
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s_%(levelname)s: %(message)s')
@@ -11,9 +12,6 @@ def get_config():
         config=json.loads(config_file.read())
         config_file.close()
         return config
-config=get_config()
-host=config["host"]
-
 
 def retry(func):    #Декоратор функции в котором выполняется бесконечный цикл запросов
     def wrappedFunc(self, *args, **kwargs):
@@ -35,13 +33,13 @@ def check_quotes():    #Функция запроса котировок
     return response_data, response_code
 
 def open_quotes_file():
-    with open('quotes.json', 'r', encoding='utf-8') as quotes_file:
+    with open(os.path.join('.','temp','quotes.json'), 'r', encoding='utf-8') as quotes_file:
         quotes=json.loads(quotes_file.read())
         quotes_file.close()
     return quotes
 
 def save_data(json_data):    #Сохранение данных json в файл
-    with open('response_data.json', 'w') as response_data_file:
+    with open(os.path.join('.','temp','response_data.json'), 'w') as response_data_file:
         response_data_file.write(json.dumps(json_data, indent=4, sort_keys=True))
         response_data_file.close()
 
@@ -67,5 +65,7 @@ def update_coin_list(*data, coin_list={}):
     else:
         logging.debug(f'Ошибка получения данных от сервера, response_code: {response_code}')
 
-
+##------исполняемый код скрипта-------
+config=get_config()
+host=config["host"]
 update_coin_list(check_quotes())
