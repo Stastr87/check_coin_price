@@ -13,6 +13,11 @@ class Coin_obj(object):
         self.timestamp_A=timestamp_A
         self.price_B=price_B
         self.timestamp_B=timestamp_B
+        self.price_moving=None
+
+    def get_price_moving(price_A, price_B):
+        price_moving=(float(price_A)-float(price_B))/float(price_B)
+        return price_moving
 
     def to_json(self):
         data={}
@@ -21,6 +26,7 @@ class Coin_obj(object):
         data['timestamp_A']=self.timestamp_A
         data['price_B']=self.price_B
         data['timestamp_B']=self.timestamp_B
+        data['price_moving']=self.price_moving
         return data
 
 
@@ -48,6 +54,12 @@ def create_new_coin_list(quotes_list):
     for item in quotes_list:
         coin_list.append(Coin_obj(item['symbol'], item['price'],item['time']).to_json())
     return coin_list
+
+def calculate_price_moving(some_coin_list):
+    for item in some_coin_list:
+        
+        item['price_moving']=Coin_obj.get_price_moving(item['price_A'],item['price_B'])
+    return some_coin_list
 
 def check_price(quotes_json_data, coin):
     
@@ -81,4 +93,8 @@ for coin in coin_list:
     coin['price_B']=price
     coin['timestamp_B']=time_stmp
 save_data(coin_list)
+
+time.sleep(1)
+save_data(calculate_price_moving(coin_list))
+
 logging.debug(f'output_data.json обновлен')
