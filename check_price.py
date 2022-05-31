@@ -57,44 +57,55 @@ def create_new_coin_list(quotes_list):
 
 def calculate_price_moving(some_coin_list):
     for item in some_coin_list:
-        
         item['price_moving']=Coin_obj.get_price_moving(item['price_A'],item['price_B'])
     return some_coin_list
 
 def check_price(quotes_json_data, coin):
-    
     for item in quotes_json_data:
         if item['symbol']==coin:
             price=item['price']
             time_stmp=item['time']
     return price, time_stmp
 
+def retry(func):    #Декоратор функции в котором выполняется бесконечный цикл запросов
+    def wrappedFunc(self, *args, **kwargs):
+        while True:
+            logging.debug(f'{func.__name__}() called')
+            func(self, *args, **kwargs)
+            time.sleep(59)
+    return wrappedFunc
+
+#@retry
+## Реализовать обновление списка наблюдения 
+#def update_coin_list
 
 ##--------------Основной код---------------
 config=get_config()
 
-quotes_list=get_quotes_data()
+quotes_list=get_quotes_data()    #Получить исходные данные
 
-coin_list=create_new_coin_list(quotes_list)
+coin_list=create_new_coin_list(quotes_list)     #Создать новый список с данными для обработки
 
-
-for coin in coin_list:
+for coin in coin_list:    #Зафиксировать цену вначале таймфрейма
     price, time_stmp=check_price(quotes_list, coin['coin_name'])
     coin['price_A']=price
     coin['timestamp_A']=time_stmp
+
 save_data(coin_list)
 
-time.sleep(int(config['time_frame']))
+time.sleep(int(config['time_frame']))    #Время ожидания до следующей итерации
 
-quotes=get_quotes_data()
+quotes=get_quotes_data()    # Получить свежие котировки
 
-for coin in coin_list:
+for coin in coin_list:    #Зафиксировать цену вконце таймфрейма
     price, time_stmp=check_price(quotes, coin['coin_name'])
     coin['price_B']=price
     coin['timestamp_B']=time_stmp
 save_data(coin_list)
 
-time.sleep(1)
-save_data(calculate_price_moving(coin_list))
+
+save_data(calculate_price_moving(coin_list))    #Подсчитать разницу и сохранить файл
+
+
 
 logging.debug(f'output_data.json обновлен')
