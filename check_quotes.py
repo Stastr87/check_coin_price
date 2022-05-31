@@ -32,13 +32,10 @@ def check_quotes():    #Функция запроса котировок
         response_data, response_code='Connection_error', None
     return response_data, response_code
 
-def open_quotes_file():
-    with open(os.path.join('.','temp','quotes.json'), 'r', encoding='utf-8') as quotes_file:
-        quotes=json.loads(quotes_file.read())
-        quotes_file.close()
-    return quotes
+
 
 def save_data(json_data):    #Сохранение данных json в файл
+    if not os.path.exists('temp'): os.makedirs('temp') 
     with open(os.path.join('.','temp','response_data.json'), 'w') as response_data_file:
         response_data_file.write(json.dumps(json_data, indent=4, sort_keys=True))
         response_data_file.close()
