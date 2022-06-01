@@ -14,12 +14,13 @@ def get_config():
         return config
 
 def retry(func):    #Декоратор функции в котором выполняется бесконечный цикл запросов
-    def wrappedFunc(self, *args, **kwargs):
+    def wrappedFunc(*args, **kwargs):
         while True:
             logging.debug(f'{func.__name__}() called')
-            func(self, *args, **kwargs)
+            func(*args, **kwargs)
             time.sleep(59)
     return wrappedFunc
+
 
 def check_quotes():    #Функция запроса котировок
     method='/fapi/v1/ticker/price'
@@ -41,12 +42,16 @@ def save_data(json_data):    #Сохранение данных json в файл
         response_data_file.close()
 
 @retry
-def update_coin_list(*data, coin_list={}):
-    result_data=data[0]
-    quotes=result_data[0]    #парсинг запроса 
+#def update_coin_list(*data, coin_list={}):
+def update_coin_list():
+    response_data, response_code=check_quotes()
+    quotes=response_data
+    #result_data=data[0]
+    #quotes=result_data[0]    #парсинг запроса 
     #quotes=result_data     #debug string
-    response_code=result_data[1]
+    #response_code=result_data[1]
     #response_code=200    # DEBUG string
+
     if response_code==200:
        try:
            for item in quotes:
@@ -65,4 +70,5 @@ def update_coin_list(*data, coin_list={}):
 ##------исполняемый код скрипта-------
 config=get_config()
 host=config["host"]
-update_coin_list(check_quotes())
+
+update_coin_list()
