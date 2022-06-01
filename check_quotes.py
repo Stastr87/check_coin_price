@@ -17,7 +17,10 @@ class Coin_obj(object):
         self.price_moving=None
 
     def get_price_moving(price_A, price_B):
-        price_moving=(float(price_A)-float(price_B))/float(price_B)
+        if price_A!=None and price_B!=None:
+            price_moving=(float(price_A)-float(price_B))/float(price_B)
+        else:
+            price_moving=0
         return price_moving
 
     def to_json(self):
