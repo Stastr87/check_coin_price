@@ -42,11 +42,10 @@ def get_config():
 def retry(func):    #Декоратор функции в котором выполняется бесконечный цикл запросов
     def wrappedFunc(*args, **kwargs):
         while True:
-            logging.debug(f'{func.__name__}() called')
+            logging.debug(f'wrappedFunc: {func.__name__}() called')
             func(*args, **kwargs)
-            time.sleep(59)
+            time.sleep(1)
     return wrappedFunc
-
 
 def check_quotes():    #Функция запроса котировок
     method='/fapi/v1/ticker/price'
@@ -58,8 +57,6 @@ def check_quotes():    #Функция запроса котировок
     except:
         response_data, response_code='Connection_error', None
     return response_data, response_code
-
-
 
 def save_data(json_data, file_name):    #Сохранение данных json в файл
     if not os.path.exists('temp'): os.makedirs('temp') 
@@ -76,12 +73,12 @@ def coin_filter(quotes,response_code):
                if item['symbol'][-4:] in get_config()['coin_mask']:    #Удалить из списка монеты по заданной маске
                    quotes.remove(item)
            save_data(quotes, 'response_data.json')    # Сохраняются данные с примененым фильтром 
-           logging.debug(f'Данные обновлены')
+           logging.debug(f'coin_filter: OK')
        except:
            save_data(quotes,'response_data.json')
-           logging.debug(f'Ошибка фильтрации, но данные обновлены')
+           logging.debug(f'coin_filter: NO NEED')
     else:
-        logging.debug(f'Ошибка получения данных от сервера, response_code: {response_code}')
+        logging.debug(f'coin_filter: FAIL to get response from server, response_code: {response_code}')
     return quotes
 
 def create_new_coin_list(some_coin_list):
@@ -95,10 +92,7 @@ def check_price(quotes_json_data, coin):
         if item['symbol']==coin:
             price=item['price']
             time_stmp=item['time']
-        else:
-            pass
-            #price=None
-            #time_stmp=None
+
     return price, time_stmp
 
 def calculate_price_moving(some_coin_list):
@@ -130,10 +124,17 @@ def update_coin_list():
         if coin['coin_name'] in actual_quotes_tikers:    #Проверка на наличие в котировках тикер для сравнения
             coin['price_B'], coin['timestamp_B']=check_price(actual_quotes, coin['coin_name'])
     save_data(coin_list,'output_data.json')
-
-    save_data(calculate_price_moving(coin_list),'calculated_output_data.json')    #Подсчитать разницу и сохранить файл
-
-    logging.debug(f'Coin list updated!')
+    
+    coin_list=calculate_price_moving(coin_list)
+    save_data(coin_list,'calculated_output_data.json')    #Подсчитать разницу и сохранить файл
+    logging.debug(f'update_coin_list: OK. Coin list updated!')
+    
+    alert_list=[]
+    for item in coin_list:
+        if item["price_moving"]>float(get_config()["alert_threshold"]):
+            alert_list.append(item)
+    save_data(alert_list,'alert_list.json')
+    logging.debug(f'update_coin_list: OK. alert_list updated!')
 
 ##------исполняемый код скрипта-------
 
