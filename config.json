@@ -1,6 +1,6 @@
 {        
     "host": "https://fapi.binance.com",
-    "time_frame": "60",
+    "time_frame": "30",
     "coin_mask": "BUSD",
     "waste_coin_list": ["ETHUSDT_220624","BTCUSDT_220624","BNBBUSD", "ANCBUSD"]
     }
