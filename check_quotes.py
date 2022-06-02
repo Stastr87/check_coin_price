@@ -3,10 +3,11 @@ import json
 import time
 import logging
 import os
+import math
 from pprint import pprint
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s_%(levelname)s: %(message)s')
-
+# Добавить методы подключения телеграм-бота
 class Coin_obj(object):
     def __init__(self, coin_name=None,price_A=None,timestamp_A=None,price_B=None,timestamp_B=None):
         self.coin_name=coin_name
@@ -18,7 +19,7 @@ class Coin_obj(object):
 
     def get_price_moving(price_A, price_B):
         if price_A!=None and price_B!=None:
-            price_moving=(float(price_A)-float(price_B))/float(price_B)
+            price_moving=(100*(float(price_B)-float(price_A)))/float(price_A)
         else:
             price_moving=0
         return price_moving
@@ -131,8 +132,9 @@ def update_coin_list():
     
     alert_list=[]
     for item in coin_list:
-        if item["price_moving"]>float(get_config()["alert_threshold"]):
+        if abs(item["price_moving"])>float(get_config()["alert_threshold"]):
             alert_list.append(item)
+        
     save_data(alert_list,'alert_list.json')
     logging.debug(f'update_coin_list: OK. alert_list updated!')
 
