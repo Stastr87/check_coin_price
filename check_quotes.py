@@ -4,10 +4,13 @@ import time
 import logging
 import os
 import math
+import telebot
 from pprint import pprint
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s_%(levelname)s: %(message)s')
-# Добавить методы подключения телеграм-бота
+
+
+
 class Coin_obj(object):
     def __init__(self, coin_name=None,price_A=None,timestamp_A=None,price_B=None,timestamp_B=None):
         self.coin_name=coin_name
@@ -65,7 +68,7 @@ def save_data(json_data, file_name):    #Сохранение данных json 
         response_data_file.write(json.dumps(json_data, indent=4, sort_keys=True))
         response_data_file.close()
 
-def coin_filter(quotes,response_code):
+def coin_filter(quotes,response_code):    #Фильтр тикеров согласно настройкам в конфиге
     if response_code==200:
        try:
            for item in quotes:
@@ -82,13 +85,13 @@ def coin_filter(quotes,response_code):
         logging.debug(f'coin_filter: FAIL to get response from server, response_code: {response_code}')
     return quotes
 
-def create_new_coin_list(some_coin_list):
+def create_new_coin_list(some_coin_list):    #Создает список из новых объектов JSON
     new_coin_list=[]
     for item in some_coin_list:
         new_coin_list.append(Coin_obj(item['symbol'], item['price'],item['time']).to_json())
     return new_coin_list
 
-def check_price(quotes_json_data, coin):
+def check_price(quotes_json_data, coin):    #Возвращает цену и таймштамп переданного тикера
     for item in quotes_json_data:
         if item['symbol']==coin:
             price=item['price']
@@ -96,13 +99,15 @@ def check_price(quotes_json_data, coin):
 
     return price, time_stmp
 
-def calculate_price_moving(some_coin_list):
+def calculate_price_moving(some_coin_list):    #Вносит изменения в список объектов Coin_obj 
     for item in some_coin_list:
         item['price_moving']=Coin_obj.get_price_moving(item['price_A'],item['price_B'])
     return some_coin_list
 
+
+
 @retry
-def update_coin_list():
+def update_coin_list(m):    #Обновление котировок в списке объектов Coin_obj
     response_data, response_code=check_quotes()
     actual_quotes=coin_filter(response_data, response_code)
 
@@ -134,11 +139,34 @@ def update_coin_list():
     for item in coin_list:
         if abs(item["price_moving"])>float(get_config()["alert_threshold"]):
             alert_list.append(item)
-        
+            position=None
+            if item["price_moving"]>0:
+                position="long"
+            else:
+                position="short"
+
+            message_string=f'{item["coin_name"]} {position}, price moving {round(item["price_moving"],2)}%'
+            bot.send_message(m.chat.id, message_string)
+    if alert_list==[]:
+        bot.send_message(m.chat.id, 'Сигналов нет.')
     save_data(alert_list,'alert_list.json')
     logging.debug(f'update_coin_list: OK. alert_list updated!')
+    return alert_list
+
+
+
+
+#Реализация бота
+bot = telebot.TeleBot(get_config()["something_unimportant"])
+
+
+@bot.message_handler(commands=["start"])
+def start(m, res=False):
+    bot.send_message(m.chat.id, 'Бот начал отслеживать котировки')# Тут нужжно описание что делает бот
+    update_coin_list(m)
 
 ##------исполняемый код скрипта-------
+# Запускаем бота
 
 host=get_config()["host"]
-update_coin_list()
+bot.polling(none_stop=True, interval=0)
