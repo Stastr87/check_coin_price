@@ -148,7 +148,8 @@ def update_coin_list(m):    #Обновление котировок в спис
             message_string=f'{item["coin_name"]} {position}, price moving {round(item["price_moving"],2)}%'
             bot.send_message(m.chat.id, message_string)
     if alert_list==[]:
-        bot.send_message(m.chat.id, 'Сигналов нет.')
+        pass
+        #bot.send_message(m.chat.id, 'Сигналов нет.')
     save_data(alert_list,'alert_list.json')
     logging.debug(f'update_coin_list: OK. alert_list updated!')
     return alert_list
