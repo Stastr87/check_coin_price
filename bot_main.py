@@ -76,7 +76,7 @@ def update_coin_list(m):  # Обновление котировок в спис�
 
 
 #Реализация бота
-bot = telebot.TeleBot(tools_module.get_config()["something_unimportant"])
+bot = telebot.TeleBot(tools_module.get_token()["something_unimportant"])
 
 
 #Добавить команду /stop

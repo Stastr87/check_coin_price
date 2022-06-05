@@ -9,6 +9,12 @@ def get_config():
         config_file.close()
         return config
 
+def get_token():
+    with open('token.json', 'r') as config_file:
+        config=json.loads(config_file.read())
+        config_file.close()
+        return config
+
 def save_data(json_data, file_name):    #Сохранение данных json в файл
     if not os.path.exists('temp'): os.makedirs('temp') 
     with open(os.path.join('.','temp',file_name), 'w') as response_data_file:
