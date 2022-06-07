@@ -54,9 +54,9 @@ def coin_filter(quotes,response_code):    #Фильтр тикеров согл�
     if response_code==200:
        try:
            for item in quotes:
-               if item['symbol'] in tools_module.get_config()['waste_coin_list']:    #Удалить из списка определенные монеты
+               if item['symbol'][-1:] != tools_module.get_config()['coin_mask']:    #Удалить монеты в которых последний символ не соответсвует маске
                    quotes.remove(item)
-               if item['symbol'][-4:] in tools_module.get_config()['coin_mask']:    #Удалить из списка монеты по заданной маске
+               if item['symbol'] in tools_module.get_config()['waste_coin_list']:    #Удалить из списка определенные монеты
                    quotes.remove(item)
            tools_module.save_data(quotes, 'response_data.json')    # Сохраняются данные с примененым фильтром 
            logging.debug(f'{__name__}.coin_filter(): OK')
@@ -85,3 +85,69 @@ def calculate_price_moving(some_coin_list):    #Вносит изменения 
     for item in some_coin_list:
         item['price_moving']=Coin_obj.get_price_moving(item['price_A'],item['price_B'])
     return some_coin_list
+
+
+def retry(func):  # Декоратор функции в котором выполняется бесконечный цикл запросов
+    def wrappedFunc(*args, **kwargs):
+        while True:
+            logging.debug(f'wrappedFunc: {func.__name__}() called')
+            func(*args, **kwargs)
+            time.sleep(1)
+    return wrappedFunc
+
+
+@retry
+def update_coin_list(m, bot):  # Обновление котировок в списке объектов Coin_obj
+    response_data, response_code = check_quotes()
+    actual_quotes = coin_filter(response_data, response_code)
+
+    # Создать новый список с данными для обработки
+    coin_list = create_new_coin_list(actual_quotes)
+
+    for coin in coin_list:  # Зафиксировать цену вначале таймфрейма
+        coin['price_A'], coin['timestamp_A'] = check_price(
+            actual_quotes, coin['coin_name'])
+
+    # Время ожидания до следующей итерации
+    time.sleep(int(tools_module.get_config()['time_frame']))
+
+    # Получить свежие котировки
+    response_data, response_code = check_quotes()
+    actual_quotes = coin_filter(response_data, response_code)
+
+    # Для проверки того что в новых котировках имеется тикер для сравнения
+    actual_quotes_tikers = []
+    for quote in actual_quotes:
+        actual_quotes_tikers.append(quote["symbol"])
+
+    for coin in coin_list:  # Зафиксировать цену вконце таймфрейма
+        # Проверка на наличие в котировках тикер для сравнения
+        if coin['coin_name'] in actual_quotes_tikers:
+            coin['price_B'], coin['timestamp_B'] = check_price(
+                actual_quotes, coin['coin_name'])
+    tools_module.save_data(coin_list, 'output_data.json')
+
+    coin_list = calculate_price_moving(coin_list)
+    # Подсчитать разницу и сохранить файл
+    tools_module.save_data(coin_list, 'calculated_output_data.json')
+    logging.debug(f'update_coin_list: OK. Coin list updated!')
+
+    alert_list = []
+    for item in coin_list:
+        if abs(item["price_moving"]) > float(tools_module.get_config()["alert_threshold"]):
+            alert_list.append(item)
+            position = None
+            if item["price_moving"] > 0:
+                position = "*LONG*"
+            else:
+                position = "*SHORT*"
+            current_price=round(float(item["price_B"]),5)
+            price_moving=round(float(item["price_moving"]),2)
+            message_string = f'*{item["coin_name"]}* = {current_price} ({price_moving}%), {position}'
+            bot.send_message(m.chat.id, message_string, parse_mode = "Markdown")
+    if alert_list == []:
+        pass
+
+    tools_module.save_data(alert_list, 'alert_list.json')
+    logging.debug(f'update_coin_list: OK. alert_list updated!')
+    return alert_list
