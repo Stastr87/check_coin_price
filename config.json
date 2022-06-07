@@ -1,7 +1,1 @@
-{
-    "host":"https://fapi.binance.com",
-    "waste_coin_list":["ANCBUSD","BNBBUSD","ETHUSDT_220624","BTCUSDT_220624"],
-    "coin_mask":"BUSD",
-    "time_frame":60,
-    "alert_threshold":1
-}
+{"host": "https://fapi.binance.com", "waste_coin_list": ["ANCBUSD", "BNBBUSD", "ETHUSDT_220624", "BTCUSDT_220624"], "coin_mask": "BUSD", "time_frame": "43", "alert_threshold": "1.11"}
