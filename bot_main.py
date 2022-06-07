@@ -61,11 +61,11 @@ def update_coin_list(m):  # Обновление котировок в спис�
             alert_list.append(item)
             position = None
             if item["price_moving"] > 0:
-                position = "long"
+                position = "LONG"
             else:
-                position = "short"
+                position = "SHORT"
 
-            message_string = f'{item["coin_name"]} {position}, price moving {round(item["price_moving"],2)}%'
+            message_string = f'{item["coin_name"]}:item["price_B"]} ({round(item["price_moving"],2)}%), {position}'
             bot.send_message(m.chat.id, message_string)
     if alert_list == []:
         pass
